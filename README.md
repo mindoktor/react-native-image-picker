@@ -8,7 +8,27 @@ iOS | Android
 <img title="iOS" src="https://github.com/marcshilling/react-native-image-picker/blob/master/images/ios-image.png"> | <img title="Android" src="https://github.com/marcshilling/react-native-image-picker/blob/master/images/android-image.png">
 
 #### _Before you open an issue_
-This library started as a basic bridge of the native iOS image picker, and I want to keep it that way. As such, functionality beyond what the native `UIImagePickerController` supports will not be supported here. **Multiple image selection, more control over the crop tool, and landscape support** are things missing from the native iOS functionality - **not issues with my library**. If you need these things, [react-native-image-crop-picker](https://github.com/ivpusic/react-native-image-crop-picker) might be a better choice for you.   
+This library started as a basic bridge of the native iOS image picker, and I want to keep it that way. As such, functionality beyond what the native `UIImagePickerController` supports will not be supported here. **Multiple image selection, more control over the crop tool, and landscape support** are things missing from the native iOS functionality - **not issues with my library**. If you need these things, [react-native-image-crop-picker](https://github.com/ivpusic/react-native-image-crop-picker) might be a better choice for you.
+
+### NOTE: This fork is only necessary if building React Native from source
+
+Make sure you have followed the official [Building React Native from source](https://facebook.github.io/react-native/docs/android-building-from-source.html) guide for your application.
+
+Here's the fix in the `build.gradle` file of this library. Might be valid for other dependencies too when experiencing gradle build errors like **<ImagePickerModule> is not abstract and does not override abstract method onActivityResult(int,int,Intent) in ActivityEventListener**
+
+```
+dependencies {
+    compile (project(path: ':ReactAndroid')) {
+        exclude group: 'com.facebook.react', module: 'react-native'
+    }
+}
+```
+
+Related solution suggestions and similar issues here:
+
+- <https://github.com/evollu/react-native-fcm/issues/235#issuecomment-272004740>
+- <https://github.com/facebook/react-native/issues/11677>
+
 
 ## Table of contents
 - [Install](#install)
