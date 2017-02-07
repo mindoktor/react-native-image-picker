@@ -40,5 +40,10 @@ repositories {
 }
 
 dependencies {
-    compile "com.facebook.react:react-native:+"  // From node_modules
+    // Fixes build issue when building React Native from source:
+    compile (project(path: ':ReactAndroid')) {
+        exclude group: 'com.facebook.react', module: 'react-native'
+    }
+    // Original instruction:
+    // compile "com.facebook.react:react-native:+"  // From node_modules
 }
