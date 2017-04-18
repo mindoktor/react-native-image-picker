@@ -10,6 +10,7 @@ import android.content.pm.ResolveInfo;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Environment;
 import android.provider.MediaStore;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
@@ -19,6 +20,7 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AlertDialog;
 import android.text.TextUtils;
 import android.util.Base64;
+import android.util.Log;
 import android.util.Patterns;
 import android.webkit.MimeTypeMap;
 import android.content.pm.PackageManager;
@@ -244,10 +246,23 @@ public class ImagePickerModule extends ReactContextBaseJavaModule
     {
       requestCode = REQUEST_LAUNCH_VIDEO_CAPTURE;
       cameraIntent = new Intent(MediaStore.ACTION_VIDEO_CAPTURE);
+
+      // PATCH: kbeckmann: Create video the same way as we create images, i.e. in the app's storage
+      final File original = createNewFile(reactContext, this.options, false, true);
+      imageConfig = imageConfig.withOriginalFile(original);
+      cameraCaptureURI = RealPathUtil.compatUriFromFile(reactContext, imageConfig.original);
+      if (cameraCaptureURI == null)
+      {
+        responseHelper.invokeError(callback, "Couldn't get file path for photo");
+        return;
+      }
+      cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, cameraCaptureURI);
+      ////////
+
       cameraIntent.putExtra(MediaStore.EXTRA_VIDEO_QUALITY, videoQuality);
       if (videoDurationLimit > 0)
       {
-        cameraIntent.putExtra(MediaStore.EXTRA_DURATION_LIMIT, videoDurationLimit);
+        cameraIntent.putExtra(MediaStore.EXTRA_DURATION_LIMIT, (long) videoDurationLimit);
       }
     }
     else
@@ -255,7 +270,7 @@ public class ImagePickerModule extends ReactContextBaseJavaModule
       requestCode = REQUEST_LAUNCH_IMAGE_CAPTURE;
       cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
 
-      final File original = createNewFile(reactContext, this.options, false);
+      final File original = createNewFile(reactContext, this.options, false, false);
       imageConfig = imageConfig.withOriginalFile(original);
 
       if (imageConfig.original != null) {
@@ -416,12 +431,11 @@ public class ImagePickerModule extends ReactContextBaseJavaModule
         return;
 
       case REQUEST_LAUNCH_VIDEO_CAPTURE:
-        final String path = getRealPathFromURI(data.getData());
-        responseHelper.putString("uri", data.getData().toString());
-        responseHelper.putString("path", path);
-        fileScan(reactContext, path);
+        // PATCH: kbeckmann: Do things similar to REQUEST_LAUNCH_IMAGE_CAPTURE but
+        // skip the exif stuff below and just invoke the callback with the path.
+        uri = cameraCaptureURI;
+        updatedResultResponse(uri, imageConfig.original.getAbsolutePath());
         responseHelper.invokeResponse(callback);
-        callback = null;
         return;
     }
 
