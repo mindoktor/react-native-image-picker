@@ -236,16 +236,20 @@ public class ImagePickerModule extends ReactContextBaseJavaModule
 
     if (pickVideo)
     {
-      Log.d("ReactImagePicker", "OHAI!");
       requestCode = REQUEST_LAUNCH_VIDEO_CAPTURE;
       cameraIntent = new Intent(MediaStore.ACTION_VIDEO_CAPTURE);
 
+      // PATCH: kbeckmann: Create video the same way as we create images, i.e. in the app's storage
       final File original = createNewFile(reactContext, this.options, false, true);
       imageConfig = imageConfig.withOriginalFile(original);
       cameraCaptureURI = RealPathUtil.compatUriFromFile(reactContext, imageConfig.original);
-      Log.d("ReactImagePicker", cameraCaptureURI.toString());
-
-      cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, cameraCaptureURI); //kbeckmann
+      if (cameraCaptureURI == null)
+      {
+        responseHelper.invokeError(callback, "Couldn't get file path for photo");
+        return;
+      }
+      cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, cameraCaptureURI);
+      ////////
 
       cameraIntent.putExtra(MediaStore.EXTRA_VIDEO_QUALITY, videoQuality);
       if (videoDurationLimit > 0)
@@ -348,9 +352,6 @@ public class ImagePickerModule extends ReactContextBaseJavaModule
 
   @Override
   public void onActivityResult(Activity activity, int requestCode, int resultCode, Intent data) {
-    Log.d("ReactImagePicker", "onActivityResult: " + requestCode + "_" + resultCode);
-    Log.d("ReactImagePicker", data.toString());
-
     //robustness code
     if (passResult(requestCode))
     {
@@ -409,17 +410,9 @@ public class ImagePickerModule extends ReactContextBaseJavaModule
         return;
 
       case REQUEST_LAUNCH_VIDEO_CAPTURE:
+        // PATCH: kbeckmann: Do things similar to REQUEST_LAUNCH_IMAGE_CAPTURE but
+        // skip the exif stuff below and just invoke the callback with the path.
         uri = cameraCaptureURI;
-        Log.d("ReactImagePicker", "Vidya!");
-        final String path = getRealPathFromURI(data.getData());
-        Log.d("ReactImagePicker", data.getData().toString());
-        Log.d("ReactImagePicker", "path: " + path);
-        //responseHelper.putString("uri", data.getData().toString());
-        //responseHelper.putString("path", path);
-        //fileScan(reactContext, path);
-        //responseHelper.invokeResponse(callback);
-        //callback = null;
-        //return;
         updatedResultResponse(uri, imageConfig.original.getAbsolutePath());
         responseHelper.invokeResponse(callback);
         return;
