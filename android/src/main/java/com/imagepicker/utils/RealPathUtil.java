@@ -16,6 +16,8 @@ import android.support.v4.content.FileProvider;
 
 import java.io.File;
 
+import static android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION;
+
 public class RealPathUtil {
 
 	public static @Nullable Uri compatUriFromFile(@NonNull final Context context,
@@ -26,9 +28,11 @@ public class RealPathUtil {
 		}
 		else {
 			final String packageName = context.getApplicationContext().getPackageName();
-			final String authority =  new StringBuilder(packageName).append(".provider").toString();
+			final String authority =  new StringBuilder(packageName).append(".fileprovider").toString();
+
 			try {
 				result = FileProvider.getUriForFile(context, authority, file);
+				context.grantUriPermission(packageName, result, FLAG_GRANT_READ_URI_PERMISSION);
 			}
 			catch(IllegalArgumentException e) {
 				e.printStackTrace();
